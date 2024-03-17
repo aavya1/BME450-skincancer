@@ -1,7 +1,7 @@
 # BME450-skincancer
 
 #Title:
-Skin Cancer Detection using Deep Learning
+Detection of Skin Cancer with Deep Learning
 
 ##Team Members:
 
