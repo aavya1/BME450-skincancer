@@ -46,7 +46,7 @@ learning_rate = 0.001
 #Smaller batch sizes provide a noisier estimate of the gradient but can lead
 #to faster convergence and better generalization. Larger  sizes provide a 
 #smoother estimate of the gradient but  require more memory and computational resources.
-batch_size = 32
+batch_size = 64
 
 #Usually ranges from 10 to 1000 or more. The number of epochs determines 
 #how many times the entire training dataset is passed forward and backward
@@ -59,7 +59,7 @@ num_epochs = 10
 #during training. A dropout rate of 0.5 means that half of the units will be 
 #dropped out during training. Smaller values may not provide sufficient regularization, 
 #while larger values may lead to underfitting.
-dropout_rate = 0.5  
+dropout_rate = 0.1  
 
 # Load dataset
 transform = transforms.Compose([
@@ -106,6 +106,8 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import roc_curve
+import matplotlib.pyplot as plt
 
 # Define the same transform as used for training
 transform = transforms.Compose([
@@ -181,3 +183,16 @@ print(conf_matrix) # TP FN
                     
 print('ROC AUC Score of the network on the test images:', roc_auc)
 print('Number Correct: ', correct, ' out of ', total)
+
+# Calculate ROC curve and AUC
+fpr, tpr, thresholds = roc_curve(true_labels_encoded, predicted_labels_encoded)
+
+# Plot ROC curve
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='b', label=f'SkinModel (AUC = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc='lower right')
+plt.show()
