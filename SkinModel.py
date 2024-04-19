@@ -12,6 +12,33 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
+import matplotlib.pyplot as plt
+
+## Define parameters
+
+#Typically ranges from 0.0001 to 0.1. 
+#Smaller values lead to slower but more precise convergence, while larger values 
+#may cause the model to overshoot the minimum.
+learning_rate = 0.001
+
+#Commonly ranges from 8 to 256.
+#Smaller batch sizes provide a noisier estimate of the gradient but can lead
+#to faster convergence and better generalization. Larger  sizes provide a 
+#smoother estimate of the gradient but  require more memory and computational resources.
+batch_size = 256
+
+#Usually ranges from 10 to 1000 or more. The number of epochs determines 
+#how many times the entire training dataset is passed forward and backward
+# through the CNN. It depends on factors such as convergence speed, dataset 
+#complexity, and computational resources.
+num_epochs = 100
+
+#Typically ranges from 0.1 to 0.5. Dropout is a regularization technique used 
+#to prevent overfitting by randomly setting a fraction of input units to zero 
+#during training. A dropout rate of 0.5 means that half of the units will be 
+#dropped out during training. Smaller values may not provide sufficient regularization, 
+#while larger values may lead to underfitting.
+dropout_rate = 0.5
 
 # Define CNN architecture
 class SkinCancerCNN(nn.Module):
@@ -35,31 +62,6 @@ class SkinCancerCNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# Define parameters
-
-#Typically ranges from 0.0001 to 0.1. 
-#Smaller values lead to slower but more precise convergence, while larger values 
-#may cause the model to overshoot the minimum.
-learning_rate = 0.001
-
-#Commonly ranges from 8 to 256.
-#Smaller batch sizes provide a noisier estimate of the gradient but can lead
-#to faster convergence and better generalization. Larger  sizes provide a 
-#smoother estimate of the gradient but  require more memory and computational resources.
-batch_size = 64
-
-#Usually ranges from 10 to 1000 or more. The number of epochs determines 
-#how many times the entire training dataset is passed forward and backward
-# through the CNN. It depends on factors such as convergence speed, dataset 
-#complexity, and computational resources.
-num_epochs = 10
-
-#Typically ranges from 0.1 to 0.5. Dropout is a regularization technique used 
-#to prevent overfitting by randomly setting a fraction of input units to zero 
-#during training. A dropout rate of 0.5 means that half of the units will be 
-#dropped out during training. Smaller values may not provide sufficient regularization, 
-#while larger values may lead to underfitting.
-dropout_rate = 0.1  
 
 # Load dataset
 transform = transforms.Compose([
@@ -70,10 +72,18 @@ transform = transforms.Compose([
 train_dataset = ImageFolder(root='/Users/aavyasrivastava/train/', transform=transform)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-# Initialize model, loss function, and optimizer
-model = SkinCancerCNN(dropout_rate=dropout_rate)  # Pass dropout_rate to the model constructor
+# Initializing model, loss function, and optimizer
+model = SkinCancerCNN(dropout_rate=dropout_rate)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+# Lists to store training and test losses
+train_losses = []
+test_losses = []
+
+# Load the test dataset
+test_dataset = ImageFolder(root='/Users/aavyasrivastava/test/', transform=transform)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 # Training loop
 for epoch in range(num_epochs):
@@ -92,12 +102,40 @@ for epoch in range(num_epochs):
             print('[%d, %5d] loss: %.3f' %
                   (epoch + 1, i + 1, running_loss / 100))
             running_loss = 0.0
+    
+    # Compute training loss after each epoch
+    train_losses.append(running_loss / len(train_loader))
+
+    # Evaluate model on test set
+    model.eval()
+    test_loss = 0.0
+    with torch.no_grad():
+        for data in test_loader:
+            images, labels = data
+            outputs = model(images)
+            test_loss += criterion(outputs, labels).item()
+    
+    # Compute average test loss
+    test_loss /= len(test_loader)
+    test_losses.append(test_loss)
+    model.train()
 
 print('Finished Training')
 
+#loss function graph
+plt.figure(figsize=(10, 5))
+plt.plot(range(1, num_epochs + 1), train_losses, label='Training Loss')
+plt.plot(range(1, num_epochs + 1), test_losses, label='Test Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Training and Test Loss')
+plt.legend()
+plt.show()
+
 # Save the trained model
 torch.save(model.state_dict(), 'skin_cancer_detection_model.pth')
-
+#Final model parameters: Learning rate: 0.001, Batch size: 128, 
+#Number of epochs: 50, Dropout rate: 0.5
 
 #TEST
 import torch
@@ -106,18 +144,12 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import roc_curve
-import matplotlib.pyplot as plt
 
 # Define the same transform as used for training
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
 ])
-
-# Load the test dataset
-test_dataset = ImageFolder(root='/Users/aavyasrivastava/test/', transform=transform)
-test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 # Load the trained model
 model = SkinCancerCNN()
@@ -184,15 +216,33 @@ print(conf_matrix) # TP FN
 print('ROC AUC Score of the network on the test images:', roc_auc)
 print('Number Correct: ', correct, ' out of ', total)
 
-# Calculate ROC curve and AUC
-fpr, tpr, thresholds = roc_curve(true_labels_encoded, predicted_labels_encoded)
+#Benign or malignant with image names
+import os
+from PIL import Image
+from torchvision.datasets import ImageFolder
 
-# Plot ROC curve
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='b', label=f'SkinModel (AUC = {roc_auc:.2f})')
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver Operating Characteristic (ROC) Curve')
-plt.legend(loc='lower right')
-plt.show()
+# Load the test dataset
+test_folder = '/Users/aavyasrivastava/test/'
+test_dataset = ImageFolder(root=test_folder, transform=transform)
+
+# Iterate over test dataset
+for image_path, label in test_dataset.imgs:
+    image_name = os.path.basename(image_path)
+    
+    # Load and transform the image
+    try:
+        image = Image.open(image_path)
+    except Exception as e:
+        print(f"Error loading {image_path}: {e}")
+        continue
+    image_tensor = transform(image).unsqueeze(0)  # Add batch dimension
+    
+    # Perform prediction
+    model.eval()
+    with torch.no_grad():
+        output = model(image_tensor)
+        probability = torch.softmax(output, dim=1)
+        predicted_class = 'benign' if probability[0][0] > probability[0][1] else 'malignant'
+    
+    # Print prediction
+    print(f"{image_name}: {predicted_class}")
