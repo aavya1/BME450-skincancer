@@ -156,6 +156,10 @@ model = SkinCancerCNN()
 model.load_state_dict(torch.load('skin_cancer_detection_model.pth'))
 model.eval()  # Set model to evaluation mode
 
+# Load the different test dataset -- 32 images
+test_dataset = ImageFolder(root='/Users/aavyasrivastava/test1/', transform=transform)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
 # Define variables for tracking accuracy
 correct = 0
 total = 0
@@ -221,8 +225,8 @@ import os
 from PIL import Image
 from torchvision.datasets import ImageFolder
 
-# Load the test dataset
-test_folder = '/Users/aavyasrivastava/test/'
+# Load the test dataset -- 32 images
+test_folder = '/Users/aavyasrivastava/test1/'
 test_dataset = ImageFolder(root=test_folder, transform=transform)
 
 # Iterate over test dataset
