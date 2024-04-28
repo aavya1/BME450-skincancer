@@ -248,5 +248,5 @@ for image_path, label in test_dataset.imgs:
         probability = torch.softmax(output, dim=1)
         predicted_class = 'benign' if probability[0][0] > probability[0][1] else 'malignant'
     
-    # Print prediction
+    # Print prediction with image name
     print(f"{image_name}: {predicted_class}")
