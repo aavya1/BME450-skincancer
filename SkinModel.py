@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Apr  5 15:11:53 2024
 
-@author: aavyasrivastava
-"""
+# BME 450 Final Project
+# Aavya Srivastava and Reagan Smiley
 
 import torch
 import torch.nn as nn
@@ -14,11 +12,11 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 import matplotlib.pyplot as plt
 
-## Define parameters
+# Define parameters
 
 #Typically ranges from 0.0001 to 0.1. 
-#Smaller values lead to slower but more precise convergence, while larger values 
-#may cause the model to overshoot the minimum.
+#Smaller values lead to slower but more precise convergence, 
+#while larger values may cause the model to overshoot the minimum.
 learning_rate = 0.001
 
 #Commonly ranges from 8 to 256.
@@ -122,7 +120,7 @@ for epoch in range(num_epochs):
 
 print('Finished Training')
 
-#loss function graph
+# Loss function graph
 plt.figure(figsize=(10, 5))
 plt.plot(range(1, num_epochs + 1), train_losses, label='Training Loss')
 plt.plot(range(1, num_epochs + 1), test_losses, label='Test Loss')
@@ -134,10 +132,10 @@ plt.show()
 
 # Save the trained model
 torch.save(model.state_dict(), 'skin_cancer_detection_model.pth')
-#Final model parameters: Learning rate: 0.001, Batch size: 128, 
-#Number of epochs: 50, Dropout rate: 0.5
+#Final model parameters: Learning rate: 0.001, Batch size: 256, 
+#Number of epochs: 100, Dropout rate: 0.5
 
-#TEST
+# TEST
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -213,14 +211,14 @@ print('Recall of the network on the test images:', recall)
 print('F1 Score of the network on the test images:', f1)
 print('Confusion Matrix of the network on the test images:')
 
-#Shows type 1 and type 2 error
+# Shows type 1 and type 2 error
 print(conf_matrix) # TP FN
                     #FP TN
                     
 print('ROC AUC Score of the network on the test images:', roc_auc)
 print('Number Correct: ', correct, ' out of ', total)
 
-#Benign or malignant with image names
+# Benign or malignant with image names
 import os
 from PIL import Image
 from torchvision.datasets import ImageFolder
